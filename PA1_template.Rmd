@@ -1,67 +1,91 @@
-#reading the file to R.
+---
+title: "RR2"
+author: "Nancy"
+date: "2020/6/28"
+output: html_document
+---
+
+Reproducible-Research-Course-Project 2
+========================================
+
+1.reading in the dataset and/or processing the data
+
+```{r readingdata,echo=TRUE}
 fileUrl<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(fileUrl,destfile ="C:/Users/123/Desktop/data/activity.zip")
 unzip("C:/Users/123/Desktop/data/activity.zip",exdir = "C:/Users/123/Desktop/data")
 activity<-read.csv("C:/Users/123/Desktop/data/activity.csv")
 head(activity)
+```
 
-#Histogram of the total number of steps taken each day.
-##calculating total steps taken each day
+2.Histogram of the total number of steps taken each day
+```{r histogram,echo=TRUE}
 step_sum<-tapply(activity$steps,activity$date,sum)
-##plotting and annotating the histogram
 hist(step_sum,breaks = 10,col="blue",xlim = c(0,25000),ylim =c(0,20),main="Total Number of Steps Taken Each Day")
+```
 
-#Mean and median number of steps taken each day
+3.Mean and median number of steps taken each day
+```{r meanandmedian,echo=TRUE}
 mean<-mean(step_sum,na.rm = TRUE)
 median<-median(step_sum,na.rm = TRUE)
+```
 
-#Time series plot of the average number of steps taken
-##transform the variable "interval" to a factor variable.
+The mean of the steps is `r mean` and the median of the steps is `r median`.
+
+4.Time series plot of the average number of steps taken
+```{r timeseriesplot,echo=TRUE,fig.length=4}
 activity<-transform(activity,interval=factor(interval))
-#calculating the average steps taken each day
 stepsPerInterval<-tapply(activity$steps,activity$interval,mean,na.rm=TRUE)
-##plotting and annotatin the histogram
 plot(names(stepsPerInterval),stepsPerInterval,type = "l",main = "Average Steps Per Interval",xlab = "5-minute Interval",ylab = "Average Steps")
+```
 
-#The maximum 5-minute interval that contains the maximum number of steps.
+5.The 5-minute interval that contains the maximum steps 
+```{r 5minuteinterval,echo=TRUE}
 maximum<-names(which.max(stepsPerInterval))
+```
+The 5-minute interval that contains the maximum steps is `r maximum`.
 
-#Imputing missing values
-##calculating the total number of missing values
+6.Total number of missing values
+```{r missingvalues,echo=TRUE}
 missing_values<-nrow(activity[is.na(activity),])
+```
 
-#filling all the missing values and create a new dataset with all the missing values filled in
-##create a new dataset that is the copy of the original dataset.
+Total number of missing values is `r missing_values`.
+
+7.Devise a strategy for filling in all of the missing values in the dataset and Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r filledmissingvalues,echo=TRUE}
 newActivity<-activity
-##filling all the missing values with the average steps taken each day
 newActivity[is.na(newActivity$steps),"steps"]<-mean(newActivity$steps,na.rm=TRUE)
-
-#Histogram of the total number of steps taken each day for the new dataset.
+head(newActivity)
+```
+8.Histogram of the total number of steps taken each day for the new dataset.
+```{r histogramofnewdataset,echo=TRUE}
 new_step_sum<-tapply(newActivity$steps,newActivity$date,sum)
 hist(new_step_sum,col = "orange",breaks=10,main="Total Steps Taken Each Day",xlab = "Steps",xlim=c(0,25000),ylim=c(0,30))
+```
 
-#mean and median total number of steps taken per day for the new dataset.
+9.Mean and median of the number of steps taken each day for the new dataset
+```{r meanandmedianfornewdataset,echo=TRUE}
 newMean<-mean(new_step_sum,na.rm=TRUE)
 newMedian<-median(new_step_sum,na.rm=TRUE)
+```
 
-#Create a new factor variable in the dataset with two levels:“weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
-Sys.setlocale("LC_ALL","English")
-#Transform the variable "date" to the class of "POSIXct" for further calculation
+After imputing the missing values, the new mean keeps unchanged while the new median increases when compare to the original dataset "activity". In general, the changing is negligible.
+
+10.Create a new factor variable in the dataset with two levels. 
+```{r newvariable,echo=TRUE}
 newActivity$date<-as.POSIXct(newActivity$date)
-#Create a new variable named "day".
 newActivity$day<-"Weekdays"
-#The variable day will indicate whether the given date is weekday or weekend.
 newActivity$day[weekdays(newActivity$date) %in% c("Saturday", "Sunday")] <- "Weekend"
-#Subsetting the data frame on weekends
-Weekend<-subset(newActivity,day=="Weekend")
-#calculating the average steps taken on weekends per intervals
-WeekendMean<-tapply(Weekend$steps,Weekend$interval,mean)
-#Subsetting the data frame on weekdays.
-Weekdays<-subset(newActivity,day=="Weekdays")
-#calculating the average steps taken on weekdays per intervals
-WeekdaysMean<-tapply(Weekdays$steps,Weekdays$interval,mean)
-#Making the time series plots on weekdays and weekends.
-par(mfrow=c(2,1),mar=c(4,4,2,1))
-plot(names(WeekendMean),WeekendMean,type="l",ylim=c(0,200),xlab = "5-minute-Interval",ylab = "Average Steps",main = "Average Steps on Weekend")
-plot(names(WeekdaysMean),WeekdaysMean,type = "l",ylim=c(0,200),xlab = "5-minute-Interval",ylab = "Average Steps",main = "Average Steps on Weekdays")
+```
 
+11.Make a panel plot containing a time series plot.
+```{r,echo=TRUE}
+par(mfrow=c(2,1),mar=c(4,4,2,1))
+Weekend<-subset(newActivity,day=="Weekend")
+WeekendMean<-tapply(Weekend$steps,Weekend$interval,mean)
+Weekdays<-subset(newActivity,day=="Weekdays")
+WeekdaysMean<-tapply(Weekdays$steps,Weekdays$interval,mean)
+plot(names(WeekendMean),WeekendMean,type="l",ylim=c(0,250),xlab = "5-minute-Interval",ylab = "Average Steps",main = "Average Steps on Weekend")
+plot(names(WeekdaysMean),WeekdaysMean,type = "l",ylim=c(0,250),xlab = "5-minute-Interval",ylab = "Average Steps",main = "Average Steps on Weekdays")
+```
