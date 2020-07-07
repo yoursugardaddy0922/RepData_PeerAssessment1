@@ -1,0 +1,102 @@
+---
+title: "RR2"
+author: "Nancy"
+date: "2020/6/28"
+output: html_document
+---
+
+Reproducible Research Course Project 2
+========================================
+
+1.Code for reading in the dataset and/or processing the data
+================================================================
+
+```{r readingdata,echo=TRUE}
+activity<-read.csv("C:/Users/123/Desktop/data/activity.csv")
+head(activity)
+```
+
+2.Histogram of the total number of steps taken each day
+=========================================================
+```{r histogram,echo=TRUE}
+step_sum<-tapply(activity$steps,activity$date,sum)
+hist(step_sum,breaks = 10,col="blue",xlim = c(0,25000),ylim =c(0,20),main="Total Number of Steps Taken Each Day")
+```
+
+3.Mean and median number of steps taken each day
+==================================================
+```{r meanandmedian,echo=TRUE}
+mean<-mean(step_sum,na.rm = TRUE)
+median<-median(step_sum,na.rm = TRUE)
+```
+
+The mean of the steps is `r mean` and the median of the steps is `r median`.
+
+4.Time series plot of the average number of steps taken
+==========================================================
+```{r timeseriesplot,echo=TRUE,fig.length=4}
+activity<-transform(activity,interval=factor(interval))
+stepsPerInterval<-tapply(activity$steps,activity$interval,mean,na.rm=TRUE)
+plot(names(stepsPerInterval),stepsPerInterval,type = "l",main = "Average Steps Per Interval",xlab = "5-minute Interval",ylab = "Average Steps")
+```
+
+5.The 5-minute interval that contains the maximum steps
+========================================================
+```{r 5minuteinterval,echo=TRUE}
+maximum<-names(which.max(stepsPerInterval))
+```
+The 5-minute interval that contains the maximum steps is `r maximum`.
+
+6.Code to describe and show a strategy for imputing missing data.
+===================================================================
+
+Total number of missing values
+```{r missingvalues,echo=TRUE}
+missing_values<-nrow(activity[is.na(activity),])
+```
+
+Total number of missing values is `r missing_values`.
+
+Devise a strategy for filling in all of the missing values in the dataset and Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r filledmissingvalues,echo=TRUE}
+newActivity<-activity
+newActivity[is.na(newActivity$steps),"steps"]<-mean(newActivity$steps,na.rm=TRUE)
+head(newActivity)
+```
+
+8.Histogram of the total number of steps taken each day after missing values are imputed.
+========================================================================================
+
+```{r histogramofnewdataset,echo=TRUE}
+new_step_sum<-tapply(newActivity$steps,newActivity$date,sum)
+hist(new_step_sum,col = "orange",breaks=10,main="Total Steps Taken Each Day",xlab = "Steps",xlim=c(0,25000),ylim=c(0,30))
+```
+
+Mean and median of the number of steps taken each day for the new dataset
+```{r meanandmedianfornewdataset,echo=TRUE}
+newMean<-mean(new_step_sum,na.rm=TRUE)
+newMedian<-median(new_step_sum,na.rm=TRUE)
+```
+
+After imputing the missing values, the new mean keeps unchanged while the new median increases when compare to the original dataset "activity". In general, the changing is negligible.
+
+10.Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+=======================================================================================
+
+Create a new factor variable in the dataset with two levels. 
+```{r newvariable,echo=TRUE}
+newActivity$date<-as.POSIXct(newActivity$date)
+newActivity$day<-"Weekdays"
+newActivity$day[weekdays(newActivity$date) %in% c("Saturday", "Sunday")] <- "Weekend"
+```
+
+Make a panel plot containing a time series plot.
+```{r,echo=TRUE}
+par(mfrow=c(2,1),mar=c(4,4,2,1))
+Weekend<-subset(newActivity,day=="Weekend")
+WeekendMean<-tapply(Weekend$steps,Weekend$interval,mean)
+Weekdays<-subset(newActivity,day=="Weekdays")
+WeekdaysMean<-tapply(Weekdays$steps,Weekdays$interval,mean)
+plot(names(WeekendMean),WeekendMean,type="l",ylim=c(0,250),xlab = "5-minute-Interval",ylab = "Average Steps",main = "Average Steps on Weekend")
+plot(names(WeekdaysMean),WeekdaysMean,type = "l",ylim=c(0,250),xlab = "5-minute-Interval",ylab = "Average Steps",main = "Average Steps on Weekdays")
+```
